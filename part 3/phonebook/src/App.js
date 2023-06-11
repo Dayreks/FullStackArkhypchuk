@@ -1,160 +1,150 @@
-import React, { useState, useEffect } from 'react'
-import Contacts from './components/Contacts'
-import PersonForm from './components/PersonForm'
-import Filter from './components/Filter'
+import { useState, useEffect } from 'react'
+import AddForm from './AddForm'
+import Filter from './Filter'
+import List from './List'
+import axios from 'axios'
+
 import service from './services/persons'
+import './Notification.css'
 
 const Notification = ({ message }) => {
-  if (message === null) {
-    return null
-  }
-  else {
-    if (message.type === 'success'){
-      return (
-        <div className="success">
-          {message.text}
-        </div>
-      )
+  console.log('I am here')
+    if (message === null) {
+      return null
     }
     else {
-      return (
-        <div className='error'>
-          {message.text}
-        </div>
-      )
+      if (message.type === 'success'){
+        return (
+          <div className="success">
+            {message.text}
+          </div>
+        )
+      }
+      if (message.type === 'validation'){
+        return (
+          <div className="error">
+            {message.text}
+          </div>
+        )
+      }
+      else {
+        return (
+          <div className='error'>
+            {message.text}
+          </div>
+        )
+      }
     }
+}
+
+const useField = (type) => {
+  const [value, setValue] = useState('')
+
+  const onChange = (event) => {
+    setValue(event.target.value)
+  }
+
+  return {
+    type,
+    value,
+    onChange,
   }
 }
 
 const App = () => {
-  const [ persons, setPersons ] = useState([])
-  const [ newContact, setNewContact ] = useState({name: '', number: ''})
-  const [ searchQuery, setSearchQuery ] = useState('')
-  const [ message, setMessage ] = useState(null)
+  const [persons, setPersons] = useState([])
+  const [message, setMessage] = useState(null)
+  const newName = useField('text')
+  const newPhone = useField('tel')
+  const showThis = useField('text')
+
+  const namesToShow = persons.filter(person => person.name?.toLowerCase().includes(showThis.value))
 
   useEffect(() => {
-    service.getAll().then(initialContacts => {
-      setPersons(initialContacts)
-    })
+    axios.get(`http://localhost:3001/api/persons`)
+      .then(response => setPersons(response.data))
   }, [])
 
-  const handleQueryChange = (event) => {
-    setSearchQuery(event.target.value)
-  }
+  const addPerson = (event) => {
+    event.preventDefault()
+    const existingPerson = persons.find(person => person.name === newName.value)
 
-  const handleContactChange = (event) => {
-    setNewContact({
-      ...newContact,
-      [event.target.name]: event.target.value,
-    })
-  }
-
-  // event handler for form
-  const addContact = (event) => {
-    event.preventDefault();
-  
-    const checker = persons.filter((person) => person.name === newContact.name);
-  
-    if (newContact.name) {
-      if (checker.length !== 0) {
-        if (!newContact.number || newContact.number === checker[0].number) {
-          setMessage({ text: `${newContact.name} is already added to phonebook`, type: 'error' });
-          setTimeout(() => {
-            setMessage(null);
-          }, 3000);
-        } else {
-          // updating contacts
-          if (
-            window.confirm(
-              `${checker[0].name} is already added to the phonebook, replace the old number with the new one?`
-            )
-          ) {
-            const contact = persons.find((el) => el.id === checker[0].id);
-            const changedContact = { ...contact, number: newContact.number };
-  
-            service
-              .updateContact(checker[0].id, changedContact)
-              .then((returnedContact) => {
-                setPersons(
-                  persons.map((el) =>
-                    el.id !== checker[0].id ? el : returnedContact
-                  )
-                );
-              })
-              .catch((error) => {
-                setMessage({
-                  text: `Information of ${checker[0].name} has already been removed from server`,
-                  type: 'error',
-                });
-                setTimeout(() => {
-                  setMessage(null);
-                }, 3000);
-                setPersons(persons.filter((el) => el.id !== checker[0].id));
-              });
-  
-            setNewContact({name: '', number: ''});
-          }
-        }
+    if (existingPerson) {
+      updatePerson(existingPerson)
+    } else {
+      if(newName.value.length < 3 || newPhone.value.length < 8) {
+        setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
+        setTimeout(() => {setMessage(null)}, 3000)
       } else {
-        const contactObj = {
-          name: newContact.name,
-          number: newContact.number,
-        };
-  
-        service
-          .createContact(contactObj)
-          .then((returnedContacts) => {
-            setPersons(persons.concat(returnedContacts));
-            setMessage({ text: `Added ${contactObj.name}`, type: 'success' });
-            setTimeout(() => {
-              setMessage(null);
-            }, 3000);
-          })
-          .catch((error) => {
-            setMessage({ text: 'The contact was not added to the server', type: 'error' });
-            setTimeout(() => {
-              setMessage(null);
-            }, 3000);
-          });
-  
-        setNewContact({name: '', number: ''});
+        createPerson()
       }
     }
-  };  
 
-  const handleDelete = (event) => {
-    if(window.confirm(`Delete ${event.target.name} ?`)){
-      service
-      .deleteContact(event.target.value)
-      .catch(error => {
-        setMessage({ text: 'The contact was not deleted from the server', type: 'error' })
-        setTimeout(() => {
-          setMessage(null);
-        }, 3000);
-      })
+    newName.onChange({ target: { value: '' } })
+    newPhone.onChange({ target: { value: '' } })
+  }
 
-      setPersons(persons.filter(el => el.name !== event.target.name))
+  const updatePerson = (person) => {
+    if (window.confirm(`${person.name} is already added to the phonebook, replace the old number with the new one?`)) {
+      const updatedPerson = { ...person, number: newPhone.value }
+
+      service.update(person.id, updatedPerson)
+        .then(updatedPerson => {
+          setPersons(persons.map(p => p.id !== person.id ? p : updatedPerson))
+          setMessage({ text: `Updated ${updatedPerson.name}`, type: 'success' })
+        })
+        .catch(error => {
+          setMessage({text:`Information of ${person.name} has already been removed from server`, type:'error'})
+          setTimeout(() => {setMessage(null)}, 3000)
+          setPersons(persons.filter(p => p.id !== person.id))
+        })
     }
   }
 
-  const namesToShow = searchQuery
-    ? persons.filter(person => person.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : persons
+  const createPerson = () => {
+    const newPerson = {
+      name: newName.value,
+      number: newPhone.value,
+    }
+
+    service.create(newPerson)
+      .then(createdPerson => {
+        setPersons(persons.concat(createdPerson))
+        setMessage({ text: `Added ${createdPerson.name}`, type: 'success' })
+      })
+      .catch(error => {
+        if (error.request.status === 404) {
+          setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
+          setTimeout(() => {setMessage(null)}, 3000)
+        } 
+      })
+  }
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      service.deleteUser(id)
+        .then(() => {
+          setPersons(persons.filter(p => p.id !== id))
+          setMessage({ text: `Deleted ${name}`, type: 'success' })
+        })
+        .catch(error => {
+          setMessage({text:`Information of ${name} was not removed from server`, type:'error'})
+          setTimeout(() => {setMessage(null)}, 3000)
+          setPersons(persons.filter(p => p.id !== id))
+        })
+    }
+  }
 
   return (
     <div>
+      <h2>Phonebook</h2>
       <Notification message={message} />
-      <h1>Phonebook</h1>
-      <Filter searchQuery={searchQuery} handleQueryChange={handleQueryChange} />
-      <h3>Add a new</h3>
-      <PersonForm addContact={addContact} newContact={newContact} handleContactChange={handleContactChange} />
-      <h3>Numbers</h3>
-      <Contacts namesToShow={namesToShow} handleDelete={handleDelete} />
+      <Filter showThis={showThis} />
+      <AddForm addPerson={addPerson} newName={newName} newPhone={newPhone} />
+      <h2>Numbers</h2>
+      <List namesToShow={namesToShow} handleDelete={handleDelete}/> 
     </div>
   )
 }
 
 export default App
-
-
-  

@@ -1,21 +1,32 @@
-import axios from 'axios';
-const baseUrl = 'http://localhost:3001/persons';
+import axios from 'axios'
+const baseUrl = '/api/persons'
 
-const requestHandler = async (method, url, data=null) => {
-  const response = await axios({
-    method,
-    url,
-    data,
-  });
-  return response.data;
+
+const getAll = async () => {
+  const request = axios.get(baseUrl)
+  const response = await request
+  return response.data
+}
+  
+const create = async newObject => {
+  const request = axios.post(baseUrl, newObject)
+  const response = await request
+  return response.data
 }
 
-const getAll = () => requestHandler('get', baseUrl);
+const update = async (id, newObject) => {
+  const request = axios.put(`${baseUrl}/${id}`, newObject)
+  const response = await request
+  return response.data
+}
+const deleteUser = (id) => {
+  const request = axios.delete(`${baseUrl}/${id}`)
+  return request
+}
 
-const createContact = newObject => requestHandler('post', baseUrl, newObject);
-
-const deleteContact = id => requestHandler('delete', `${baseUrl}/${id}`);
-
-const updateContact = (id, newObject) => requestHandler('put', `${baseUrl}/${id}`, newObject);
-
-export default { getAll, createContact, deleteContact, updateContact };
+export default { 
+  getAll, 
+  create, 
+  update,
+  deleteUser
+}
