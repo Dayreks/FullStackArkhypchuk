@@ -5,7 +5,6 @@ import List from './List'
 import axios from 'axios'
 
 import service from './services/persons'
-import './Notification.css'
 
 const Notification = ({ message }) => {
   console.log('I am here')
@@ -37,112 +36,134 @@ const Notification = ({ message }) => {
     }
 }
 
-const useField = (type) => {
-  const [value, setValue] = useState('')
-
-  const onChange = (event) => {
-    setValue(event.target.value)
-  }
-
-  return {
-    type,
-    value,
-    onChange,
-  }
-}
-
 const App = () => {
   const [persons, setPersons] = useState([])
+  const [newName, setNewName] = useState('')
+  const [newPhone, setNewPhone] = useState('')
+  const [showThis, setShowThis] = useState('')
   const [message, setMessage] = useState(null)
-  const newName = useField('text')
-  const newPhone = useField('tel')
-  const showThis = useField('text')
 
-  const namesToShow = persons.filter(person => person.name?.toLowerCase().includes(showThis.value))
+  const namesToShow = persons.filter(person => person.name?.toLowerCase().includes(showThis))
 
-  useEffect(() => {
-    axios.get(`http://localhost:3001/api/persons`)
-      .then(response => setPersons(response.data))
-  }, [])
 
   const addPerson = (event) => {
-    event.preventDefault()
-    const existingPerson = persons.find(person => person.name === newName.value)
+    event.preventDefault();
+    
 
-    if (existingPerson) {
-      updatePerson(existingPerson)
-    } else {
-      if(newName.value.length < 3 || newPhone.value.length < 8) {
-        setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
-        setTimeout(() => {setMessage(null)}, 3000)
-      } else {
-        createPerson()
+    const findTheName = persons.filter(person => person.name===newName)
+
+    if (findTheName.length!==0) {
+      if(window.confirm(`${findTheName[0].name} is already added to the phonebook, replace the old number with the new one?`)){
+        const contact = persons.find(el => el.id === findTheName[0].id)
+        const updatedContact = { ...contact, number: newPhone }
+
+        service
+        .update(findTheName[0].id, updatedContact)
+        .then(returnedContact =>{
+          setPersons(persons.map(el =>el.id !== findTheName[0].id ? el : returnedContact))})
+          .catch(error => {
+            setMessage({text:`Information of ${findTheName[0].name} has already been removed from server`, type:'error'})
+            setTimeout(() => {setMessage(null)}, 3000)
+            setPersons(persons.filter(el => el.id !== findTheName[0].id))
+          })
+        setNewName("")
+        setNewPhone("")
+        document.getElementById('nameInput').value = ''
+        document.getElementById('phoneInput').value = ''
       }
     }
 
-    newName.onChange({ target: { value: '' } })
-    newPhone.onChange({ target: { value: '' } })
-  }
+    else{
 
-  const updatePerson = (person) => {
-    if (window.confirm(`${person.name} is already added to the phonebook, replace the old number with the new one?`)) {
-      const updatedPerson = { ...person, number: newPhone.value }
+      if(newName.length < 3 || newPhone.length < 8) {
+        setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
+        console.log('134234567890')
+        setTimeout(() => {setMessage(null)}, 3000)
+      } 
 
-      service.update(person.id, updatedPerson)
-        .then(updatedPerson => {
-          setPersons(persons.map(p => p.id !== person.id ? p : updatedPerson))
-          setMessage({ text: `Updated ${updatedPerson.name}`, type: 'success' })
+      
+        const newPerson = {
+          name: newName,
+          number: newPhone,
+        }
+
+        service.create(newPerson)
+        .then(returnedContacts => {
+            setPersons(persons.concat(newPerson))
+            setMessage({text:`Added ${newPerson.name}`, type:'success'})
+            setTimeout(() => {setMessage(null)}, 3000)
         })
         .catch(error => {
-          setMessage({text:`Information of ${person.name} has already been removed from server`, type:'error'})
-          setTimeout(() => {setMessage(null)}, 3000)
-          setPersons(persons.filter(p => p.id !== person.id))
-        })
+          
+         if (error.request.status === 404) {
+          console.log(error)
+            // const errors = ;
+            // const message = Object.values(errors).map(error => error.message).join(', ');
+            setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
+            console.log('134234567890')
+            setTimeout(() => {setMessage(null)}, 3000)
+          } else {
+            console.log('hahahhah');
+          }
+        });
+      
+
+      setNewName("")
+      setNewPhone("")
+      document.getElementById('nameInput').value = ''
+      document.getElementById('phoneInput').value = ''
     }
+
   }
 
-  const createPerson = () => {
-    const newPerson = {
-      name: newName.value,
-      number: newPhone.value,
-    }
 
-    service.create(newPerson)
-      .then(createdPerson => {
-        setPersons(persons.concat(createdPerson))
-        setMessage({ text: `Added ${createdPerson.name}`, type: 'success' })
+  const changeFilterValue = (e) => {
+    e.preventDefault(); 
+    setShowThis(e.target.value)
+  }
+
+  const changeNameValue = (e) => {
+    e.preventDefault(); 
+    setNewName(e.target.value)
+  }
+
+  const changePhoneValue = (e) => {
+    e.preventDefault(); 
+    setNewPhone(e.target.value)
+  }
+
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get(`http://localhost:3001/api/persons`)
+      .then(response => {
+        console.log('promise fulfilled')
+        setPersons(response.data)
       })
-      .catch(error => {
-        if (error.request.status === 404) {
-          setMessage({text:`Name must be at least 3 characters and number must be at least 8 characters`, type:'validation'})
-          setTimeout(() => {setMessage(null)}, 3000)
-        } 
-      })
-  }
+  }, [])
 
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Delete ${name}?`)) {
-      service.deleteUser(id)
-        .then(() => {
-          setPersons(persons.filter(p => p.id !== id))
-          setMessage({ text: `Deleted ${name}`, type: 'success' })
-        })
-        .catch(error => {
-          setMessage({text:`Information of ${name} was not removed from server`, type:'error'})
-          setTimeout(() => {setMessage(null)}, 3000)
-          setPersons(persons.filter(p => p.id !== id))
-        })
+
+  const handleDelete = (e) => {
+    console.log(e.target.value)
+    if(window.confirm(`Delete ${e.target.name}?`)){
+      service
+      .deleteUser(e.target.value)
+      .catch(error => {alert('the contact was not deleted from the server')})
+
+      setPersons(persons.filter(el => el.name !== e.target.name))
     }
   }
+
 
   return (
     <div>
       <h2>Phonebook</h2>
-      <Notification message={message} />
-      <Filter showThis={showThis} />
-      <AddForm addPerson={addPerson} newName={newName} newPhone={newPhone} />
+        <Notification message={message} />
+        <Filter changeFilterValue={changeFilterValue}/>
+        <AddForm changeNameValue={changeNameValue} changePhoneValue={changePhoneValue} addPerson={addPerson}/>
       <h2>Numbers</h2>
-      <List namesToShow={namesToShow} handleDelete={handleDelete}/> 
+        <List key='1' namesToShow={namesToShow} handleDelete={handleDelete}/> 
+        {console.log(namesToShow)}
     </div>
   )
 }
