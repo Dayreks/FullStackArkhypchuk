@@ -16,6 +16,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.22",
     "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -29,7 +30,7 @@
     "eject": "react-scripts eject",
     "build:ui": "rm -rf build && cd ../phonebook && npm run build && cp -r build ../phonebook_backend",
     "deploy": "fly deploy",
-    "deploy:full": "npm run build:ui && npm run deploy",    
+    "deploy:full": "npm run build:ui && npm run deploy",
     "logs:prod": "fly logs"
   },
   "eslintConfig": {

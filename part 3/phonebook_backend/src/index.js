@@ -1,12 +1,10 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import mongoose from 'mongoose';
 
-import Person from './models/person';
+import Person from './models/person.js';
 
-dotenv.config();
 const app = express();
 mongoose.set('strictQuery', true);
 
@@ -120,7 +118,7 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
-const PORT = process.env.PORT
+const PORT = process.env.REACT_APP_PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })

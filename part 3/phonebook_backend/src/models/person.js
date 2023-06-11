@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import uniqueValidator from 'mongoose-unique-validator';
-const url = process.env.MONGODB_URI
+const url = process.env.REACT_APP_MONGODB_URI
 
 //mongoose.set('useFindAndModify', false)
 
