@@ -43,7 +43,7 @@ app.get('/info', (request, response) => {
   Person
   .countDocuments()
   .then(count => {
-    response.send(`Phonebook has info for ${count} people` + "<br>" + `${new Date()}`)
+    response.send(`Phonebook has info for ${count} people<br>${new Date()}`)
   })
   .catch(error => {
     console.log(error)
@@ -107,7 +107,7 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return response.status(400).send({ error: 'malformatted id' });
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message });

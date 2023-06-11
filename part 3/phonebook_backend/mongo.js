@@ -12,7 +12,7 @@ const number = process.argv[4];
 
 const url =
   `mongodb+srv://arkhypchukbohdan:${password}@cluster0.xuhndmi.mongodb.net/phonebookApp?retryWrites=true&w=majority`
-
+  
 set('strictQuery',false)
 connect(url)
 
