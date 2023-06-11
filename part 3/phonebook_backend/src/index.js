@@ -1,12 +1,12 @@
-import express from 'express';
-import morgan from 'morgan';
-import cors from 'cors';
-import mongoose from 'mongoose';
-
-import Person from './models/person.js';
-
-const app = express();
+require('dotenv').config()
+const express = require('express')
+const morgan = require('morgan')
+const app = express()
+const cors = require('cors')
+const mongoose = require('mongoose')
 mongoose.set('strictQuery', true);
+
+const Person = require('./models/person')
 
 app.use(express.static('build'))
 app.use(cors())
@@ -43,7 +43,7 @@ app.get('/info', (request, response) => {
   Person
   .countDocuments()
   .then(count => {
-    response.send(`Phonebook has info for ${count} people<br>${new Date()}`)
+    response.send(`Phonebook has info for ${count} people` + "<br>" + `${new Date()}`)
   })
   .catch(error => {
     console.log(error)
@@ -107,7 +107,7 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-  if (error.name === 'CastError' && error.kind === 'ObjectId') {
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
     return response.status(400).send({ error: 'malformatted id' });
   } else if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message });

@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-const { set, connect, Schema, model, connection } = mongoose;
+import { set, connect, Schema, model, connection } from 'mongoose';
 
 if (process.argv.length<3) {
   console.log('give password as argument')
@@ -12,7 +11,7 @@ const number = process.argv[4];
 
 const url =
   `mongodb+srv://arkhypchukbohdan:${password}@cluster0.xuhndmi.mongodb.net/phonebookApp?retryWrites=true&w=majority`
-  
+
 set('strictQuery',false)
 connect(url)
 
@@ -49,4 +48,3 @@ else if (process.argv.length == 3){
   else{
     connection.close()
   }
-    

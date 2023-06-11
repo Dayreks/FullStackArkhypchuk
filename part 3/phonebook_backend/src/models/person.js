@@ -1,7 +1,6 @@
-import mongoose from 'mongoose';
-import uniqueValidator from 'mongoose-unique-validator';
 const url = process.env.REACT_APP_MONGODB_URI
 
+const mongoose = require('mongoose')
 //mongoose.set('useFindAndModify', false)
 
 console.log('connecting to', url)
@@ -9,6 +8,8 @@ console.log('connecting to', url)
 mongoose.connect(url, { useNewUrlParser: true })
 .then(result => {console.log('connected to MongoDB')})
 .catch((error) => {console.log('error connecting to MongoDB:', error.message)})
+
+const uniqueValidator = require('mongoose-unique-validator')
 
 const personSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true, minlength: 3 },
