@@ -1,12 +1,14 @@
-require('dotenv').config()
-const express = require('express')
-const morgan = require('morgan')
-const app = express()
-const cors = require('cors')
-const mongoose = require('mongoose')
-mongoose.set('strictQuery', true);
+import dotenv from 'dotenv';
+import express from 'express';
+import morgan from 'morgan';
+import cors from 'cors';
+import mongoose from 'mongoose';
 
-const Person = require('./models/person')
+import Person from './models/person';
+
+dotenv.config();
+const app = express();
+mongoose.set('strictQuery', true);
 
 app.use(express.static('build'))
 app.use(cors())
