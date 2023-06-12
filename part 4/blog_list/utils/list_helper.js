@@ -1,64 +1,32 @@
-const _ = require('lodash')
+const lodash = require('lodash')
 
-const dummy = (blogs) => {
-  return 1
+const dummy = () => 1
+
+const totalLikes = (blogs) => {
+  return blogs.reduce((total, blog) => total + blog.likes, 0)
 }
 
-const totalLikes = (array) => {
-
-  const reducer = (sum, item) => {
-    return sum + item.likes
-  }
-
-  return array.length === 0
-    ? 0
-    : array.reduce(reducer, 0)
+const favoriteBlog = (blogs) => {
+  const favorite = lodash.maxBy(blogs, 'likes')
+  return favorite ? { title: favorite.title, author: favorite.author, likes: favorite.likes } : null
 }
 
-const favoriteBlog = (array) => {
-  const maxLikes = Math.max(...array.map(el => el.likes))
-  const favBlog = array.find(el => el.likes === maxLikes)
-  const object = {
-    title: favBlog.title,
-    author: favBlog.author,
-    likes: favBlog.likes
-  }
-  return object
+const mostBlogs = (blogs) => {
+  const authors = lodash.countBy(blogs, 'author')
+  const mostActiveAuthor = lodash.maxBy(lodash.toPairs(authors), lodash.last)
+  return mostActiveAuthor ? { author: mostActiveAuthor[0], blogs: mostActiveAuthor[1] } : null
 }
 
-const mostBlogs = (objArray) => {
-  const authorArray = _.map(objArray, 'author')
-  const maxBlogs = _.chain(authorArray).countBy().toPairs().max(_.last)
+const mostLikes = (blogs) => {
+  const authorLikes = lodash(blogs)
+    .groupBy('author')
+    .map((userBlogs, author) => ({
+      author: author,
+      likes: lodash.sumBy(userBlogs, 'likes')
+    }))
+    .value()
 
-
-  const author = maxBlogs.head().value()
-  const numBlogs = maxBlogs.tail().value()
-
-  const object = {
-    author: author,
-    blogs: numBlogs[0]
-  }
-  return object
-}
-
-const mostLiked = (array) => {
-  obj = {}
-  _.forEach(array, function (value) {
-    if (value.author in obj) {
-      obj[value.author] += value.likes
-    }
-    else {
-      obj[value.author] = value.likes
-    }
-  })
-
-  author = Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b)
-  likes = obj[author]
-  const object = {
-    author: author,
-    likes: likes
-  }
-  return object
+  return lodash.maxBy(authorLikes, 'likes')
 }
 
 module.exports = {
@@ -66,5 +34,5 @@ module.exports = {
   totalLikes,
   favoriteBlog,
   mostBlogs,
-  mostLiked
+  mostLikes
 }
